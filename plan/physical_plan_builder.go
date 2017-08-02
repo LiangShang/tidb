@@ -704,7 +704,7 @@ func (p *LogicalJoin) convert2IndexNestedLoopJoinLeft(prop *requiredProperty, in
 	} else {
 		resultInfo = enforceProperty(limitProperty(prop.limit), resultInfo)
 	}
-	resultInfo.cost = 10
+	resultInfo.cost = 0
 	return resultInfo, nil
 }
 
@@ -780,7 +780,7 @@ func (p *LogicalJoin) convert2IndexNestedLoopJoinRight(prop *requiredProperty, i
 	} else {
 		resultInfo = enforceProperty(limitProperty(prop.limit), resultInfo)
 	}
-	resultInfo.cost = 10
+	resultInfo.cost = 0
 	return resultInfo, nil
 }
 
