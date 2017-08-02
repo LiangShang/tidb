@@ -704,7 +704,7 @@ func (p *LogicalJoin) convert2IndexNestedLoopJoinLeft(prop *requiredProperty, in
 	} else {
 		resultInfo = enforceProperty(limitProperty(prop.limit), resultInfo)
 	}
-	resultInfo.cost /= 2.5
+	resultInfo.cost = 10
 	return resultInfo, nil
 }
 
@@ -780,7 +780,7 @@ func (p *LogicalJoin) convert2IndexNestedLoopJoinRight(prop *requiredProperty, i
 	} else {
 		resultInfo = enforceProperty(limitProperty(prop.limit), resultInfo)
 	}
-	resultInfo.cost /= 2.5
+	resultInfo.cost = 10
 	return resultInfo, nil
 }
 
@@ -965,11 +965,13 @@ func (p *LogicalJoin) convert2PhysicalPlan(prop *requiredProperty) (*physicalPla
 	if err1 != nil {
 		return nil, errors.Trace(err1)
 	}
+	log.Warnf("%v %v", info1.p.ID(), info1.cost)
 	info2, err2 := p.convert2PhysicalJoin(info, &requiredProperty{})
 	info2 = enforceProperty(prop, info2)
 	if err2 != nil {
 		return nil, errors.Trace(err2)
 	}
+	log.Warnf("%v %v", info2.p.ID(), info2.cost)
 	if info1.cost < info2.cost {
 		info = info1
 	} else {
