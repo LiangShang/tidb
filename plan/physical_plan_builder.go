@@ -704,6 +704,7 @@ func (p *LogicalJoin) convert2IndexNestedLoopJoinLeft(prop *requiredProperty, in
 	} else {
 		resultInfo = enforceProperty(limitProperty(prop.limit), resultInfo)
 	}
+	resultInfo.cost /= 2.5
 	return resultInfo, nil
 }
 
@@ -779,6 +780,7 @@ func (p *LogicalJoin) convert2IndexNestedLoopJoinRight(prop *requiredProperty, i
 	} else {
 		resultInfo = enforceProperty(limitProperty(prop.limit), resultInfo)
 	}
+	resultInfo.cost /= 2.5
 	return resultInfo, nil
 }
 
@@ -959,6 +961,26 @@ func (p *LogicalJoin) convert2PhysicalPlan(prop *requiredProperty) (*physicalPla
 	if info != nil {
 		return info, nil
 	}
+	info1, err1 := p.convert2PhysicalJoin(info, prop)
+	if err1 != nil {
+		return nil, errors.Trace(err1)
+	}
+	info2, err2 := p.convert2PhysicalJoin(info, &requiredProperty{})
+	info2 = enforceProperty(prop, info2)
+	if err2 != nil {
+		return nil, errors.Trace(err2)
+	}
+	if info1.cost < info2.cost {
+		info = info1
+	} else {
+		info = info2
+	}
+	p.storePlanInfo(prop, info)
+	return info, nil
+}
+
+func (p *LogicalJoin) convert2PhysicalJoin(info *physicalPlanInfo, prop *requiredProperty) (*physicalPlanInfo, error) {
+	var err error
 	switch p.JoinType {
 	case SemiJoin, LeftOuterSemiJoin:
 		info, err = p.convert2PhysicalPlanSemi(prop)
@@ -1054,7 +1076,6 @@ func (p *LogicalJoin) convert2PhysicalPlan(prop *requiredProperty) (*physicalPla
 			info = lInfo
 		}
 	}
-	p.storePlanInfo(prop, info)
 	return info, nil
 }
 
