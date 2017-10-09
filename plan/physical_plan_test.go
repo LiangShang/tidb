@@ -313,8 +313,6 @@ func (s *testPlanSuite) TestPushDownExpression(c *C) {
 
 		is, err := MockResolve(stmt)
 		c.Assert(err, IsNil)
-		err = expression.InferType(mockContext().GetSessionVars().StmtCtx, stmt)
-		c.Assert(err, IsNil)
 
 		builder := &planBuilder{
 			allocator: new(idAllocator),
@@ -548,6 +546,7 @@ func (s *testPlanSuite) TestCBO(c *C) {
 			colMapper: make(map[*ast.ColumnNameExpr]int),
 			is:        is,
 		}
+		builder.ctx.GetSessionVars().AllowAggPushDown = true
 		p := builder.build(stmt)
 		c.Assert(builder.err, IsNil)
 		lp := p.(LogicalPlan)

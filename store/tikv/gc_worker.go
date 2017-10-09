@@ -357,7 +357,7 @@ func (w *GCWorker) checkGCInterval(now time.Time) (bool, error) {
 	if err != nil {
 		return false, errors.Trace(err)
 	}
-	gcConfigGauge.WithLabelValues(gcRunIntervalKey).Set(float64(runInterval.Seconds()))
+	gcConfigGauge.WithLabelValues(gcRunIntervalKey).Set(runInterval.Seconds())
 	lastRun, err := w.loadTime(gcLastRunTimeKey, w.session)
 	if err != nil {
 		return false, errors.Trace(err)
@@ -375,7 +375,7 @@ func (w *GCWorker) calculateNewSafePoint(now time.Time) (*time.Time, error) {
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
-	gcConfigGauge.WithLabelValues(gcLifeTimeKey).Set(float64(lifeTime.Seconds()))
+	gcConfigGauge.WithLabelValues(gcLifeTimeKey).Set(lifeTime.Seconds())
 	lastSafePoint, err := w.loadTime(gcSafePointKey, w.session)
 	if err != nil {
 		return nil, errors.Trace(err)
@@ -588,18 +588,9 @@ func doGC(ctx goctx.Context, store *tikvStore, safePoint uint64, identifier stri
 	gcWorkerCounter.WithLabelValues("do_gc").Inc()
 
 	store.gcWorker.saveSafePoint(gcSavedSafePoint, safePoint)
-	// We want to make sure to delay enough time even if the Sleep is disrupted
-	{
-		startTime := time.Now()
-		leftTime := gcSafePointCacheInterval
-		for {
-			time.Sleep(leftTime)
-			leftTime = time.Since(startTime) - gcSafePointCacheInterval
-			if leftTime <= 0 {
-				break
-			}
-		}
-	}
+
+	// Sleep to wait for all other tidb instances update their safepoint cache.
+	time.Sleep(gcSafePointCacheInterval)
 
 	req := &tikvrpc.Request{
 		Type: tikvrpc.CmdGC,

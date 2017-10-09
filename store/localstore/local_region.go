@@ -74,7 +74,7 @@ func (t *topnSorter) Less(i, j int) bool {
 		v1 := t.rows[i].key[index]
 		v2 := t.rows[j].key[index]
 
-		ret, err := v1.CompareDatum(t.ctx.sc, v2)
+		ret, err := v1.CompareDatum(t.ctx.sc, &v2)
 		if err != nil {
 			t.err = errors.Trace(err)
 			return true
@@ -123,7 +123,7 @@ func (t *topnHeap) Less(i, j int) bool {
 		v1 := t.rows[i].key[index]
 		v2 := t.rows[j].key[index]
 
-		ret, err := v1.CompareDatum(t.ctx.sc, v2)
+		ret, err := v1.CompareDatum(t.ctx.sc, &v2)
 		if err != nil {
 			t.err = errors.Trace(err)
 			return true
@@ -200,7 +200,7 @@ func (rs *localRegion) Handle(req *regionRequest) (*regionResponse, error) {
 		if err != nil {
 			return nil, errors.Trace(err)
 		}
-		txn := newTxn(rs.store, kv.Version{Ver: uint64(sel.StartTs)})
+		txn := newTxn(rs.store, kv.Version{Ver: sel.StartTs})
 		ctx := &selectContext{
 			sel:       sel,
 			txn:       txn,
@@ -707,7 +707,7 @@ func (rs *localRegion) getRowsFromIndexReq(ctx *selectContext) error {
 		if err != nil {
 			return errors.Trace(err)
 		}
-		limit -= int64(count)
+		limit -= count
 	}
 	if ctx.aggregate {
 		return rs.getRowsFromAgg(ctx)
